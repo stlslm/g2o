@@ -14,6 +14,7 @@ endif()
 # 3D examples
 if(G2O_BUILD_SBA_TYPES)
   add_subdirectory(ba)
+  add_subdirectory(ba_solpen)
   add_subdirectory(ba_anchored_inverse_depth)
   add_subdirectory(data_convert)
 endif()
