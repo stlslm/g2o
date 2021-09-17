@@ -28,6 +28,11 @@
 
 #include <iostream>
 #include <fstream>
+#include <assert.h>     /* assert */
+
+// #include <experimental/filesystem>
+#include <boost/filesystem.hpp>
+
 #include <string>
 
 #include <unordered_set>
@@ -55,6 +60,9 @@ using namespace Eigen;
 using namespace std;
 using namespace cv;
 
+// namespace fs = std::experimental::filesystem;
+namespace bfs = boost::filesystem;
+
 #define MAXBUFSIZE ((int)1e6)
 
 class Sample {
@@ -62,17 +70,19 @@ class Sample {
   static int uniform(int from, int to) { return static_cast<int>(g2o::Sampler::uniformRand(from, to)); }
 };
 
-int read_cam_T_balls(vector<g2o::SE3Quat>& cam_T_balls) {
+
+int read_rvec_tvec_txtfile(string file, vector<g2o::SE3Quat>& cam_T_balls) {
     int cols = 0, rows = 0;
     double buff[MAXBUFSIZE];
 
     ifstream infile;
-    infile.open("geom_txt_dat/cam_T_balls.txt");
+    infile.open(file);
     cam_T_balls.clear();
     while (! infile.eof())
     {
         string line;
         getline(infile, line);
+        // std::cout << "line:\n" << line << std::endl;
 
         int temp_cols = 0;
         stringstream stream(line);
@@ -88,7 +98,9 @@ int read_cam_T_balls(vector<g2o::SE3Quat>& cam_T_balls) {
         cv2eigen(R3, R3_);
         Eigen::Quaterniond q(R3_);
         g2o::SE3Quat pose(q,trans);
-        std::cout << pose << std::endl;
+        // std::cout << "pose:\n" << pose.toVector() << std::endl;
+        // std::cout << "pose: " << q;
+        // std::cout << "; " << trans << std::endl;
         cam_T_balls.push_back(pose);
 
         if (temp_cols == 0)
@@ -100,8 +112,64 @@ int read_cam_T_balls(vector<g2o::SE3Quat>& cam_T_balls) {
         rows++;
     }
     infile.close();
-
+    return true;
 }
+
+bool read_aruco_corner_measurements(string folder, vector<vector<Vector2d>>& aru_im_corners) {
+
+  if (bfs::is_directory(bfs::path(folder.c_str()))) {
+  } else {
+    cout << folder << " is not a dir\n";
+  }
+
+  return true;
+}
+
+bool read_aruco_ids(string folder, vector<vector<int>>& aru_ids) {
+    double buff[MAXBUFSIZE];
+
+    aru_ids.clear();
+
+    // list all files in the folder
+    std::cout << "directory_iterator:\n";
+    if (bfs::is_directory(bfs::path(folder.c_str()))) {
+      for (auto&& x : bfs::directory_iterator(bfs::path(folder.c_str()))) {
+        std::size_t found = x.path().filename().string().find("detected_ids_");
+        if (found!=std::string::npos) {
+
+          vector<int> frm_ids;
+
+          cout << "parsing file " << x.path().string() << '...\n';
+          ifstream infile;
+          infile.open(x.path().string());
+          while (!infile.eof())
+          {
+            string line;
+            getline(infile, line);
+
+            stringstream stream(line);
+            int cnt = 0;
+            while(! stream.eof()){
+              stream >> buff[cnt];
+              cnt++;
+            }
+            assert(cnt==1);
+            int id = buff[0];
+            frm_ids.push_back(id);
+          }
+          infile.close();
+
+          aru_ids.push_back(frm_ids);
+        }
+      }
+    } else {
+      cout << folder << " is not a dir\n";
+      return false;
+    }
+    
+    return true;
+}
+
 
 int main(int argc, const char* argv[]){
   if (argc<2)
@@ -192,7 +260,20 @@ int main(int argc, const char* argv[]){
 
   // read all init poses (32+N_frame)-by-6
   vector<g2o::SE3Quat> cam_T_balls;
-  read_cam_T_balls(cam_T_balls);
+  read_rvec_tvec_txtfile("geom_txt_dat/cam_T_balls.txt", cam_T_balls);
+
+  vector<g2o::SE3Quat> cent_T_faces;
+  read_rvec_tvec_txtfile("geom_txt_dat/T_vec_cent_faces.txt", cent_T_faces);
+
+  vector<vector<Vector2d>> aru_im_corners;
+  read_aruco_corner_measurements("geom_txt_dat", aru_im_corners);
+
+  vector<vector<int>> aru_ids;
+  read_aruco_ids("geom_txt_dat", aru_ids);
+
+  std::cout << "exit..." << std::endl;
+  return 0;
+
   int vertex_id = 0;
   for (size_t i=0; i<15; ++i) {
     Vector3d trans(i*0.04-1.,0,0);
