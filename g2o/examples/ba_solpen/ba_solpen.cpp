@@ -280,8 +280,8 @@ int main(int argc, const char* argv[]){
   // }
 
   // TODO
-  double focal_length= 1000.;
-  Vector2d principal_point(320., 240.);
+  double focal_length= 2.64474533e+03;
+  Vector2d principal_point(1.00223569e+03, 5.77405442e+02);
 
   vector<g2o::SE3Quat,
       aligned_allocator<g2o::SE3Quat> > true_poses;
@@ -306,27 +306,29 @@ int main(int argc, const char* argv[]){
   vector<vector<int>> aru_ids;
   read_aruco_ids("geom_txt_dat", aru_ids);
 
-  std::cout << "exit..." << std::endl;
-  return 0;
+  std::cout << "exit..." << std::endl;  
 
-//   int vertex_id = 0;
-//   for (size_t i=0; i<15; ++i) {
-//     Vector3d trans(i*0.04-1.,0,0);
+    // adding vertices
+    int vertex_id = 0;
+    for (size_t i=0; i<15; ++i) {
+        Vector3d trans(i*0.04-1.,0,0);
 
-//     Eigen:: Quaterniond q;
-//     q.setIdentity();
-//     g2o::SE3Quat pose(q,trans);
-//     g2o::VertexSE3Expmap * v_se3
-//         = new g2o::VertexSE3Expmap();
-//     v_se3->setId(vertex_id);
-//     if (i<2){
-//       v_se3->setFixed(true);
-//     }
-//     v_se3->setEstimate(pose);
-//     optimizer.addVertex(v_se3);
-//     true_poses.push_back(pose);
-//     vertex_id++;
-//   }
+        Eigen:: Quaterniond q;
+        q.setIdentity();
+        g2o::SE3Quat pose(q,trans);
+        g2o::VertexSE3Expmap * v_se3
+            = new g2o::VertexSE3Expmap();
+        v_se3->setId(vertex_id);
+        if (i<2){
+            v_se3->setFixed(true);
+        }
+        v_se3->setEstimate(pose);
+        optimizer.addVertex(v_se3);
+        true_poses.push_back(pose);
+        vertex_id++;
+    }
+
+    return 0;
 //   int point_id=vertex_id;
 //   int point_num = 0;
 //   double sum_diff2 = 0;
