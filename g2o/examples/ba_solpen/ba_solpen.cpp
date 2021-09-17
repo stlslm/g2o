@@ -310,7 +310,9 @@ int main(int argc, const char* argv[]){
 
     // adding vertices
     int vertex_id = 0;
-    for (size_t i=0; i<15; ++i) {
+    int all_pose_cnt = cam_T_balls.size() + cent_T_faces.size();
+    for (size_t i=0; i<all_pose_cnt; ++i) {
+        
         Vector3d trans(i*0.04-1.,0,0);
 
         Eigen:: Quaterniond q;
@@ -319,12 +321,13 @@ int main(int argc, const char* argv[]){
         g2o::VertexSE3Expmap * v_se3
             = new g2o::VertexSE3Expmap();
         v_se3->setId(vertex_id);
-        if (i<2){
-            v_se3->setFixed(true);
-        }
+        // if (i<2){
+        //     v_se3->setFixed(true);
+        // }
         v_se3->setEstimate(pose);
         optimizer.addVertex(v_se3);
         true_poses.push_back(pose);
+
         vertex_id++;
     }
 
