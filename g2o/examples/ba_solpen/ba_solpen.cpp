@@ -76,6 +76,13 @@ int read_rvec_tvec_txtfile(string file, vector<g2o::SE3Quat>& cam_T_balls) {
     int cols = 0, rows = 0;
     double buff[MAXBUFSIZE];
 
+    if (bfs::exists(bfs::path(file))) {
+        std::cout << "Opening file " << file << "..." << std::endl;
+    } else {
+        std::cout << "File " << file << " does not exist!" << std::endl;
+        return -1;
+    }
+
     ifstream infile;
     infile.open(file);
     cam_T_balls.clear();
@@ -310,23 +317,35 @@ int main(int argc, const char* argv[]){
 
     // adding vertices
     int vertex_id = 0;
-    int all_pose_cnt = cam_T_balls.size() + cent_T_faces.size();
-    for (size_t i=0; i<all_pose_cnt; ++i) {
+    // int all_pose_cnt = cam_T_balls.size() + cent_T_faces.size();
+    for (size_t i=0; i<cent_T_faces.size(); ++i) {
         
-        Vector3d trans(i*0.04-1.,0,0);
-
-        Eigen:: Quaterniond q;
-        q.setIdentity();
-        g2o::SE3Quat pose(q,trans);
+        g2o::SE3Quat pose = cent_T_faces[i];
         g2o::VertexSE3Expmap * v_se3
             = new g2o::VertexSE3Expmap();
         v_se3->setId(vertex_id);
         // if (i<2){
         //     v_se3->setFixed(true);
         // }
-        v_se3->setEstimate(pose);
+        v_se3->setEstimate(pose); 
         optimizer.addVertex(v_se3);
-        true_poses.push_back(pose);
+        // true_poses.push_back(pose);
+
+        vertex_id++;
+    }
+
+    for (size_t i=0; i<cam_T_balls.size(); ++i) {
+        
+        g2o::SE3Quat pose = cam_T_balls[i];
+        g2o::VertexSE3Expmap * v_se3
+            = new g2o::VertexSE3Expmap();
+        v_se3->setId(vertex_id);
+        // if (i<2){
+        //     v_se3->setFixed(true);
+        // }
+        v_se3->setEstimate(pose);  
+        optimizer.addVertex(v_se3);
+        // true_poses.push_back(pose);
 
         vertex_id++;
     }
