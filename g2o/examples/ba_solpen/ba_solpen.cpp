@@ -90,7 +90,7 @@ int read_rvec_tvec_txtfile(string file, vector<g2o::SE3Quat>& cam_T_balls) {
     {
         string line;
         getline(infile, line);
-        // std::cout << "line:\n" << line << std::endl;
+        std::cout << "line:\n" << line << std::endl;
 
         int temp_cols = 0;
         stringstream stream(line);
@@ -119,6 +119,7 @@ int read_rvec_tvec_txtfile(string file, vector<g2o::SE3Quat>& cam_T_balls) {
 
         rows++;
     }
+    std::cout << "Total size: " << cam_T_balls.size() << std::endl;
     infile.close();
     return true;
 }
@@ -368,10 +369,12 @@ int main(int argc, const char* argv[]){
 
     // create the graph
     int num_frames = cam_T_balls.size();
+    vector<Vector2d> aru_im_p2d;
+    vector<int> ids;
     for (size_t n_frm=0; n_frm<num_frames; ++n_frm) {
-        vector<int> ids = aru_ids[n_frm];
+        ids = aru_ids[n_frm];
         g2o::SE3Quat cam_T_pen = cam_T_balls[n_frm];
-        vector<Vector2d> aru_im_p2d = aru_im_corners[n_frm];
+        aru_im_p2d = aru_im_corners[n_frm];
 
         for (size_t n_mkid=0; n_mkid<ids.size(); n_mkid++) {
             int id = ids[n_mkid];
@@ -410,19 +413,19 @@ int main(int argc, const char* argv[]){
                 // std::cout << "cam f " << e->_cam->focal_length << std::endl;
                 // std::cout << "cam p " << e->_cam->principle_point << std::endl;
 
-                std::cout << "** check edge:" << std::endl;
-                std::cout << "e vtx 0: " << static_cast<g2o::VertexPointXYZ*>(e->vertices()[0])->estimate().transpose() << std::endl;
-                std::cout << "e vtx 1: " << static_cast<g2o::VertexSE3Expmap*>(e->vertices()[1])->estimate().translation().transpose() << std::endl;
-                std::cout << "e vtx 2: " << static_cast<g2o::VertexSE3Expmap*>(e->vertices()[2])->estimate().translation().transpose() << std::endl;
+                // std::cout << "** check edge:" << std::endl;
+                // std::cout << "e vtx 0: " << static_cast<g2o::VertexPointXYZ*>(e->vertices()[0])->estimate().transpose() << std::endl;
+                // std::cout << "e vtx 1: " << static_cast<g2o::VertexSE3Expmap*>(e->vertices()[1])->estimate().translation().transpose() << std::endl;
+                // std::cout << "e vtx 2: " << static_cast<g2o::VertexSE3Expmap*>(e->vertices()[2])->estimate().translation().transpose() << std::endl;
 
                 std::cout << std::endl;
-                std::cout << "** check optimizer:" << std::endl;
+                // std::cout << "** check optimizer:" << std::endl;
                 g2o::SparseOptimizer::EdgeContainer es = optimizer.activeEdges();
-                for (int ii=0; ii<es.size(); ii++) {
-                    std::cout << "e :" << static_cast<g2o::VertexPointXYZ*>(es[ii]->vertices()[0])->estimate().transpose() << std::endl;
-                    std::cout << "e :" << static_cast<g2o::VertexSE3Expmap*>(es[ii]->vertices()[1])->estimate().translation().transpose() << std::endl;
-                    std::cout << "e :" << static_cast<g2o::VertexSE3Expmap*>(es[ii]->vertices()[2])->estimate().translation().transpose() << std::endl;
-                }                
+                // for (int ii=0; ii<es.size(); ii++) {
+                //     std::cout << "e :" << static_cast<g2o::VertexPointXYZ*>(es[ii]->vertices()[0])->estimate().transpose() << std::endl;
+                //     std::cout << "e :" << static_cast<g2o::VertexSE3Expmap*>(es[ii]->vertices()[1])->estimate().translation().transpose() << std::endl;
+                //     std::cout << "e :" << static_cast<g2o::VertexSE3Expmap*>(es[ii]->vertices()[2])->estimate().translation().transpose() << std::endl;
+                // }                
                 
                 std::cout << "done adding an edge at obj pt " << vertex_id  << ", frame id: " << n_frm << std::endl;  
             }
