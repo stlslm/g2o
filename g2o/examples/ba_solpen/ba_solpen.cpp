@@ -393,7 +393,7 @@ int main(int argc, const char* argv[]){
                 // vt_cam_T_pen->setEstimate(cam_T_pen);
                 // vt_cam_T_pen->setId(pose_id);
                 e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertices().find(n_frm + num_markers)->second));
-                // std::cout << optimizer.vertices().find(n_frm + num_markers)->second << std::endl;
+                // std::cout << dynamic_cast<g2o::SE3Quat*>(optimizer.vertices().find(n_frm + num_markers)->second)->translation() << std::endl;
 
                 // g2o::VertexSE3Expmap* vt_pen_T_face = new g2o::VertexSE3Expmap();
                 // vt_pen_T_face->setEstimate(pen_T_face);
@@ -404,6 +404,21 @@ int main(int argc, const char* argv[]){
                 e->setParameterId(0,0);
                 optimizer.addEdge(e);
 
+                // std::cout << "cam f " << e->_cam->focal_length << std::endl;
+                // std::cout << "cam p " << e->_cam->principle_point << std::endl;
+
+                std::cout << "** check edge:" << std::endl;
+                std::cout << "e vtx 0: " << static_cast<g2o::VertexPointXYZ*>(e->vertices()[0])->estimate().transpose() << std::endl;
+                std::cout << "e vtx 1: " << static_cast<g2o::VertexSE3Expmap*>(e->vertices()[1])->estimate().translation().transpose() << std::endl;
+                std::cout << "e vtx 2: " << static_cast<g2o::VertexSE3Expmap*>(e->vertices()[2])->estimate().translation().transpose() << std::endl;
+
+                std::cout << std::endl;
+                std::cout << "** check optimizer:" << std::endl;
+                auto es = optimizer.activeEdges();
+                for (auto it : g2o::SparseOptimizer::EdgeContainer::iterator(es)) {
+                    std::cout << "e :" << it->estimate().transpose() << std::endl;
+                }                
+                
                 std::cout << "done adding an edge at obj pt " << vertex_id  << ", frame id: " << n_frm << std::endl;  
             }
         }
