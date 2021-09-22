@@ -306,14 +306,13 @@ int main(int argc, const char* argv[]){
 
   vector<g2o::SE3Quat> cent_T_faces;
   read_rvec_tvec_txtfile("geom_txt_dat/T_vec_cent_faces.txt", cent_T_faces);
+  int num_markers = cent_T_faces.size();
 
   vector<vector<Vector2d>> aru_im_corners;
   read_aruco_corner_measurements("geom_txt_dat", aru_im_corners);
 
   vector<vector<int>> aru_ids;
   read_aruco_ids("geom_txt_dat", aru_ids);
-
-  std::cout << "exit..." << std::endl;  
 
     // adding vertices
     int vertex_id = 0;
@@ -334,6 +333,8 @@ int main(int argc, const char* argv[]){
         vertex_id++;
     }
 
+    std::cout << "done adding cent_T_faces..." << std::endl;  
+
     for (size_t i=0; i<cam_T_balls.size(); ++i) {
         
         g2o::SE3Quat pose = cam_T_balls[i];
@@ -349,6 +350,8 @@ int main(int argc, const char* argv[]){
 
         vertex_id++;
     }
+
+    std::cout << "done adding cam_T_balls..." << std::endl;  
 
     // create the graph
     int num_frames = cam_T_balls.size();
@@ -367,6 +370,7 @@ int main(int argc, const char* argv[]){
                 // add the edge
                 g2o::EdgeProjectARU2UV * e = new g2o::EdgeProjectARU2UV();
 
+                // ** measurement
                 Vector2d z = aru_im_p2d[i];
 
                 e->setMeasurement(z);
@@ -375,123 +379,63 @@ int main(int argc, const char* argv[]){
                     g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
                     e->setRobustKernel(rk);
                 }
+
+                // ** estimate
                 g2o::VertexPointXYZ* vt_aru_obj_pts = new g2o::VertexPointXYZ();
-                vt_aru_obj_pts->setId();
-                e->setVertex(0, &v1);
+                vt_aru_obj_pts->setEstimate(aru_obj_pts);
+                vt_aru_obj_pts->setFixed(true);
+                vt_aru_obj_pts->setId(vertex_id);
+                ++vertex_id;
+                optimizer.addVertex(vt_aru_obj_pts);
+                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(vt_aru_obj_pts));
+
+                // g2o::VertexSE3Expmap* vt_cam_T_pen = new g2o::VertexSE3Expmap();
+                // vt_cam_T_pen->setEstimate(cam_T_pen);
+                // vt_cam_T_pen->setId(pose_id);
+                e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertices().find(n_frm + num_markers)->second));
+                // std::cout << optimizer.vertices().find(n_frm + num_markers)->second << std::endl;
+
+                // g2o::VertexSE3Expmap* vt_pen_T_face = new g2o::VertexSE3Expmap();
+                // vt_pen_T_face->setEstimate(pen_T_face);
+                // vt_pen_T_face->setId(pose_id);
+                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertices().find(n_frm)->second));
+                // std::cout << optimizer.vertices().find(n_frm)->second << std::endl;
+
+                e->setParameterId(0,0);
+                optimizer.addEdge(e);
+
+                std::cout << "done adding an edge at obj pt " << vertex_id  << ", frame id: " << n_frm << std::endl;  
             }
         }
     }
 
+    std::cout << "Finished creating the graph " << std::endl;  
+
+    cout << endl;
+    optimizer.initializeOptimization();
+    optimizer.setVerbose(true);
+    std::cout << "Finished initialize optimization... " << std::endl;  
+
+    if (STRUCTURE_ONLY){
+        g2o::StructureOnlySolver<3> structure_only_ba;
+        cout << "Performing structure-only BA:"   << endl;
+        g2o::OptimizableGraph::VertexContainer points;
+        for (g2o::OptimizableGraph::VertexIDMap::const_iterator it = optimizer.vertices().begin(); it != optimizer.vertices().end(); ++it) {
+            g2o::OptimizableGraph::Vertex* v = static_cast<g2o::OptimizableGraph::Vertex*>(it->second);
+            if (v->dimension() == 3) {
+                points.push_back(v);
+            } else
+            {
+                std::cout << "vertex dim != 3" << std::endl;
+            }
+        }
+        structure_only_ba.calc(points, 10);
+    }
+    optimizer.save("test.g2o");
+    cout << endl;
+    cout << "Performing full BA:" << endl;
+    optimizer.optimize(10);
+    cout << endl;
+
     return 0;
-//   int point_id=vertex_id;
-//   int point_num = 0;
-//   double sum_diff2 = 0;
-
-//   cout << endl;
-//   unordered_map<int,int> pointid_2_trueid;
-//   unordered_set<int> inliers;
-
-//   for (size_t i=0; i<mk_corners.size(); ++i){
-//     g2o::VertexPointXYZ * v_p
-//         = new g2o::VertexPointXYZ();
-//     v_p->setId(point_id);
-//     v_p->setMarginalized(true);
-//     v_p->setEstimate(mk_corners.at(i)
-//                      + Vector3d(g2o::Sampler::gaussRand(0., 1),
-//                                 g2o::Sampler::gaussRand(0., 1),
-//                                 g2o::Sampler::gaussRand(0., 1)));
-//     int num_obs = 0;
-//     for (size_t j=0; j<true_poses.size(); ++j){
-//       Vector2d z = cam_params->cam_map(true_poses.at(j).map(mk_corners.at(i)));
-//       if (z[0]>=0 && z[1]>=0 && z[0]<640 && z[1]<480){
-//         ++num_obs;
-//       }
-//     }
-//     if (num_obs>=2){
-//       optimizer.addVertex(v_p);
-//       bool inlier = true;
-//       for (size_t j=0; j<true_poses.size(); ++j){
-//         Vector2d z
-//             = cam_params->cam_map(true_poses.at(j).map(mk_corners.at(i)));
-
-//         if (z[0]>=0 && z[1]>=0 && z[0]<640 && z[1]<480){
-//           double sam = g2o::Sampler::uniformRand(0., 1.);
-//           if (sam<OUTLIER_RATIO){
-//             z = Vector2d(Sample::uniform(0,640),
-//                          Sample::uniform(0,480));
-//             inlier= false;
-//           }
-//           z += Vector2d(g2o::Sampler::gaussRand(0., PIXEL_NOISE),
-//                         g2o::Sampler::gaussRand(0., PIXEL_NOISE));
-//           g2o::EdgeProjectXYZ2UV * e
-//               = new g2o::EdgeProjectXYZ2UV();
-//           e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(v_p));
-//           e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>
-//                        (optimizer.vertices().find(j)->second));
-//           e->setMeasurement(z);
-//           e->information() = Matrix2d::Identity();
-//           if (ROBUST_KERNEL) {
-//             g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
-//             e->setRobustKernel(rk);
-//           }
-//           e->setParameterId(0, 0);
-//           optimizer.addEdge(e);
-//         }
-//       }
-
-//       if (inlier){
-//         inliers.insert(point_id);
-//         Vector3d diff = v_p->estimate() - mk_corners[i];
-
-//         sum_diff2 += diff.dot(diff);
-//       }
-//       pointid_2_trueid.insert(make_pair(point_id,i));
-//       ++point_id;
-//       ++point_num;
-//     }
-//   }
-//   cout << endl;
-//   optimizer.initializeOptimization();
-//   optimizer.setVerbose(true);
-//   if (STRUCTURE_ONLY){
-//     g2o::StructureOnlySolver<3> structure_only_ba;
-//     cout << "Performing structure-only BA:"   << endl;
-//     g2o::OptimizableGraph::VertexContainer points;
-//     for (g2o::OptimizableGraph::VertexIDMap::const_iterator it = optimizer.vertices().begin(); it != optimizer.vertices().end(); ++it) {
-//       g2o::OptimizableGraph::Vertex* v = static_cast<g2o::OptimizableGraph::Vertex*>(it->second);
-//       if (v->dimension() == 3)
-//         points.push_back(v);
-//     }
-//     structure_only_ba.calc(points, 10);
-//   }
-//   //optimizer.save("test.g2o");
-//   cout << endl;
-//   cout << "Performing full BA:" << endl;
-//   optimizer.optimize(10);
-//   cout << endl;
-//   cout << "Point error before optimisation (inliers only): " << sqrt(sum_diff2/inliers.size()) << endl;
-//   point_num = 0;
-//   sum_diff2 = 0;
-//   for (unordered_map<int,int>::iterator it=pointid_2_trueid.begin();
-//        it!=pointid_2_trueid.end(); ++it){
-//     g2o::HyperGraph::VertexIDMap::iterator v_it
-//         = optimizer.vertices().find(it->first);
-//     if (v_it==optimizer.vertices().end()){
-//       cerr << "Vertex " << it->first << " not in graph!" << endl;
-//       exit(-1);
-//     }
-//     g2o::VertexPointXYZ * v_p
-//         = dynamic_cast< g2o::VertexPointXYZ * > (v_it->second);
-//     if (v_p==0){
-//       cerr << "Vertex " << it->first << "is not a PointXYZ!" << endl;
-//       exit(-1);
-//     }
-//     Vector3d diff = v_p->estimate()-mk_corners[it->second];
-//     if (inliers.find(it->first)==inliers.end())
-//       continue;
-//     sum_diff2 += diff.dot(diff);
-//     ++point_num;
-//   }
-//   cout << "Point error after optimisation (inliers only): " << sqrt(sum_diff2/inliers.size()) << endl;
-//   cout << endl;
 }
