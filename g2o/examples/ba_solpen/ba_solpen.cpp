@@ -350,6 +350,38 @@ int main(int argc, const char* argv[]){
         vertex_id++;
     }
 
+    // create the graph
+    int num_frames = cam_T_balls.size();
+    for (size_t n_frm=0; n_frm<num_frames; ++n_frm) {
+        vector<int> ids = aru_ids[n_frm];
+        g2o::SE3Quat cam_T_pen = cam_T_balls[n_frm];
+        vector<Vector2d> aru_im_p2d = aru_im_corners[n_frm];
+
+        for (size_t n_mkid=0; n_mkid<ids.size(); n_mkid++) {
+            int id = ids[n_mkid];
+            g2o::SE3Quat pen_T_face = cent_T_faces[id];
+
+            for (size_t i=0; i<mk_corners.size(); i++) {
+                Vector3d aru_obj_pts = mk_corners[i];
+
+                // add the edge
+                g2o::EdgeProjectARU2UV * e = new g2o::EdgeProjectARU2UV();
+
+                Vector2d z = aru_im_p2d[i];
+
+                e->setMeasurement(z);
+                e->information() = Matrix2d::Identity();
+                if (ROBUST_KERNEL) {
+                    g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
+                    e->setRobustKernel(rk);
+                }
+                g2o::VertexPointXYZ* vt_aru_obj_pts = new g2o::VertexPointXYZ();
+                vt_aru_obj_pts->setId();
+                e->setVertex(0, &v1);
+            }
+        }
+    }
+
     return 0;
 //   int point_id=vertex_id;
 //   int point_num = 0;
