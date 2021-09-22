@@ -127,14 +127,19 @@ bool read_aruco_corner_measurements(string folder, vector<vector<Vector2d>>& aru
     aru_im_corners.clear();
 
     if (bfs::is_directory(bfs::path(folder.c_str()))) {
+        std::set<bfs::path> sort_by_name;
         for (auto&& x : bfs::directory_iterator(bfs::path(folder))) {
-            std::size_t found = x.path().filename().string().find("aruco_image_corners_");
+            sort_by_name.insert(x.path());
+        }
+        
+        for (auto &x : sort_by_name) {
+            std::size_t found = x.filename().string().find("aruco_image_corners_");
             if (found != std::string::npos) {
                 vector<Vector2d> frm_crns;
 
-                cout << "parsing file " << x.path().string() << "...\n";
+                cout << "parsing file " << x.string() << "...\n";
                 ifstream infile;
-                infile.open(x.path().string());
+                infile.open(x.string());
                 while (!infile.eof())
                 {
                     string line;
@@ -163,6 +168,7 @@ bool read_aruco_corner_measurements(string folder, vector<vector<Vector2d>>& aru
         cout << folder << " is not a dir\n";
         return false;
     }
+    std::cout << "Total size: " << aru_im_corners.size() << std::endl;
 
     return true;
 }
@@ -175,15 +181,20 @@ bool read_aruco_ids(string folder, vector<vector<int>>& aru_ids) {
     // list all files in the folder
     std::cout << "directory_iterator:\n";
     if (bfs::is_directory(bfs::path(folder.c_str()))) {
-      for (auto&& x : bfs::directory_iterator(bfs::path(folder.c_str()))) {
-        std::size_t found = x.path().filename().string().find("detected_ids_");
+        std::set<bfs::path> sort_by_name;
+        for (auto&& x : bfs::directory_iterator(bfs::path(folder))) {
+            sort_by_name.insert(x.path());            
+        }
+
+    for (auto &x : sort_by_name) {
+        std::size_t found = x.filename().string().find("detected_ids_");
         if (found!=std::string::npos) {
 
           vector<int> frm_ids;
 
-          cout << "parsing file " << x.path().string() << "...\n";
+          cout << "parsing file " << x.string() << "...\n";
           ifstream infile;
-          infile.open(x.path().string());
+          infile.open(x.string());
           while (!infile.eof())
           {
             string line;
@@ -208,6 +219,8 @@ bool read_aruco_ids(string folder, vector<vector<int>>& aru_ids) {
       std::cout << folder << " is not a dir\n" <<std::endl;
       return false;
     }
+
+    std::cout << "Total size: " << aru_ids.size() << std::endl;
     
     return true;
 }
@@ -389,18 +402,8 @@ int main(int argc, const char* argv[]){
                 optimizer.addVertex(vt_aru_obj_pts);
                 e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(vt_aru_obj_pts));
 
-                // g2o::VertexSE3Expmap* vt_cam_T_pen = new g2o::VertexSE3Expmap();
-                // vt_cam_T_pen->setEstimate(cam_T_pen);
-                // vt_cam_T_pen->setId(pose_id);
                 e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertices().find(n_frm + num_markers)->second));
-                // std::cout << dynamic_cast<g2o::SE3Quat*>(optimizer.vertices().find(n_frm + num_markers)->second)->translation() << std::endl;
-
-                // g2o::VertexSE3Expmap* vt_pen_T_face = new g2o::VertexSE3Expmap();
-                // vt_pen_T_face->setEstimate(pen_T_face);
-                // vt_pen_T_face->setId(pose_id);
                 e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertices().find(n_frm)->second));
-                // std::cout << optimizer.vertices().find(n_frm)->second << std::endl;
-
                 e->setParameterId(0,0);
                 optimizer.addEdge(e);
 
@@ -414,9 +417,11 @@ int main(int argc, const char* argv[]){
 
                 std::cout << std::endl;
                 std::cout << "** check optimizer:" << std::endl;
-                auto es = optimizer.activeEdges();
-                for (auto it : g2o::SparseOptimizer::EdgeContainer::iterator(es)) {
-                    std::cout << "e :" << it->estimate().transpose() << std::endl;
+                g2o::SparseOptimizer::EdgeContainer es = optimizer.activeEdges();
+                for (int ii=0; ii<es.size(); ii++) {
+                    std::cout << "e :" << static_cast<g2o::VertexPointXYZ*>(es[ii]->vertices()[0])->estimate().transpose() << std::endl;
+                    std::cout << "e :" << static_cast<g2o::VertexSE3Expmap*>(es[ii]->vertices()[1])->estimate().translation().transpose() << std::endl;
+                    std::cout << "e :" << static_cast<g2o::VertexSE3Expmap*>(es[ii]->vertices()[2])->estimate().translation().transpose() << std::endl;
                 }                
                 
                 std::cout << "done adding an edge at obj pt " << vertex_id  << ", frame id: " << n_frm << std::endl;  
