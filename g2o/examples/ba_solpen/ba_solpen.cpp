@@ -273,7 +273,7 @@ int main(int argc, const char* argv[]){
   cout << "DENSE: "<<  DENSE << endl;
 
   g2o::SparseOptimizer optimizer;
-  optimizer.setVerbose(false);
+  optimizer.setVerbose(true);
   string solverName = "lm_fix6_3";
   if (DENSE) {
     solverName = "lm_dense6_3";
@@ -347,7 +347,7 @@ int main(int argc, const char* argv[]){
         vertex_id++;
     }
 
-    std::cout << "done adding cent_T_faces..." << std::endl;  
+    std::cout << "done adding cent_T_faces. Total vertices = " << vertex_id << std::endl;  
 
     for (size_t i=0; i<cam_T_balls.size(); ++i) {
         
@@ -365,7 +365,7 @@ int main(int argc, const char* argv[]){
         vertex_id++;
     }
 
-    std::cout << "done adding cam_T_balls..." << std::endl;  
+    std::cout << "done adding cam_T_balls. Total vertices = " << vertex_id << std::endl;  
 
     // create the graph
     int num_frames = cam_T_balls.size();
@@ -418,7 +418,7 @@ int main(int argc, const char* argv[]){
                 // std::cout << "e vtx 1: " << static_cast<g2o::VertexSE3Expmap*>(e->vertices()[1])->estimate().translation().transpose() << std::endl;
                 // std::cout << "e vtx 2: " << static_cast<g2o::VertexSE3Expmap*>(e->vertices()[2])->estimate().translation().transpose() << std::endl;
 
-                std::cout << std::endl;
+                // std::cout << std::endl;
                 // std::cout << "** check optimizer:" << std::endl;
                 g2o::SparseOptimizer::EdgeContainer es = optimizer.activeEdges();
                 // for (int ii=0; ii<es.size(); ii++) {

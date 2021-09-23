@@ -26,8 +26,7 @@ void EdgeProjectARU2UV::computeError() {
 
     const CameraParameters* cam = static_cast<const CameraParameters*>(parameter(0));
 
-    // _error = measurement() - cam->cam_map(cam_T_pen.map(pen_T_face.map(mk_obj_p3d)));
-    _error = measurement() ;//- cam->cam_map(cam_T_pen.map(pen_T_face.map(mk_obj_p3d)));
+     _error = measurement() - cam->cam_map(cam_T_pen.map(pen_T_face.map(mk_obj_p3d)));
 };
 
 
