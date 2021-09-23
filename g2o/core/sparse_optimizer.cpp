@@ -49,7 +49,7 @@ namespace g2o{
   using namespace std;
 
   SparseOptimizer::SparseOptimizer() :
-    _forceStopFlag(0), _verbose(false), _algorithm(nullptr), _computeBatchStatistics(false)
+    _forceStopFlag(0), _verbose(false), _algorithm(nullptr), _computeBatchStatistics(false), _export_every_iteration(false)
   {
     _graphActions.resize(AT_NUM_ELEMENTS);
   }
@@ -420,6 +420,13 @@ namespace g2o{
           << "\t edges= " << _activeEdges.size();
         _algorithm->printVerbose(cerr);
         cerr << endl;
+
+        if (export_every_iteration()) {
+          std::stringstream fn;
+          fn << "sol_iter_" << std::setfill('0') << std::setw(5) << i << ".g2o"; 
+          // std::cout << "saving solution file " << fn.str() << std::endl;
+          save(fn.str().c_str());
+        }
       }
       ++cjIterations;
       postIteration(i);
@@ -565,6 +572,10 @@ namespace g2o{
   void SparseOptimizer::setVerbose(bool verbose)
   {
     _verbose = verbose;
+  }
+
+  void SparseOptimizer::setExportEveryIteration(bool export_every_iteration) {
+    _export_every_iteration = export_every_iteration;
   }
 
   void SparseOptimizer::setAlgorithm(OptimizationAlgorithm* algorithm)

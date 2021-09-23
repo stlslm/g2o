@@ -2,6 +2,7 @@
 
 #include "edge_project_aru2uv.h"
 
+#include <iostream>
 
 namespace g2o {
 
@@ -27,6 +28,8 @@ void EdgeProjectARU2UV::computeError() {
     const CameraParameters* cam = static_cast<const CameraParameters*>(parameter(0));
 
      _error = measurement() - cam->cam_map(cam_T_pen.map(pen_T_face.map(mk_obj_p3d)));
+    // std::cout << "measurement: " << measurement().transpose() << std::endl;
+    // std::cout << "est: " << cam->cam_map(cam_T_pen.map(pen_T_face.map(mk_obj_p3d))).transpose() << std::endl;
 };
 
 

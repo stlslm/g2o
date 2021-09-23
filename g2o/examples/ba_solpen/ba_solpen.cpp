@@ -294,7 +294,8 @@ int main(int argc, const char* argv[]){
 
   // add the marker corners
   vector<Vector3d> mk_corners;
-  double mL = 21.74 * 0.001;
+  double mL = 21.74 * 0.001;  // big solpen
+//   double mL = 0.01302; // small solpen
   // for (size_t i=0;i<500; ++i)
   // {
   mk_corners.push_back(Vector3d(-mL/2., mL/2., 0.));
@@ -440,6 +441,7 @@ int main(int argc, const char* argv[]){
     cout << endl;
     optimizer.initializeOptimization();
     optimizer.setVerbose(true);
+    optimizer.setExportEveryIteration(true);
     std::cout << "Finished initialize optimization... " << std::endl;  
 
     if (STRUCTURE_ONLY){
@@ -460,7 +462,7 @@ int main(int argc, const char* argv[]){
     optimizer.save("test.g2o");
     cout << endl;
     cout << "Performing full BA:" << endl;
-    optimizer.optimize(10);
+    optimizer.optimize(2000);
     cout << endl;
 
     return 0;

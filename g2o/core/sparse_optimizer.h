@@ -177,6 +177,9 @@ namespace g2o {
     bool verbose()  const {return _verbose;}
     void setVerbose(bool verbose);
 
+    bool export_every_iteration()  const {return _export_every_iteration;}
+    void setExportEveryIteration(bool export_every_iteration);
+
     /**
      * sets a variable checked at every iteration to force a user stop. The iteration exits when the variable is true;
      */
@@ -288,6 +291,7 @@ namespace g2o {
     protected:
     bool* _forceStopFlag;
     bool _verbose;
+    bool _export_every_iteration;
 
     VertexContainer _ivMap;
     VertexContainer _activeVertices;   ///< sorted according to VertexIDCompare
