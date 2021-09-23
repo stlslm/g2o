@@ -90,13 +90,16 @@ int read_rvec_tvec_txtfile(string file, vector<g2o::SE3Quat>& cam_T_balls) {
     {
         string line;
         getline(infile, line);
-        std::cout << "line:\n" << line << std::endl;
+        std::cout << "line " << cam_T_balls.size() << ": " << line << std::endl;
 
         int temp_cols = 0;
         stringstream stream(line);
         while(! stream.eof())
             stream >> buff[cols*rows+temp_cols++];
-
+        if (temp_cols<=1) {
+            std::cout << "skipping line..." << std::endl;
+            continue;
+        }            
         int idx= cols*rows;
         Vector3d trans(buff[idx+3], buff[idx+4], buff[idx+5]);
         Mat rv3 = (Mat_<double>(1,3) << buff[idx+0], buff[idx+1], buff[idx+2]);
