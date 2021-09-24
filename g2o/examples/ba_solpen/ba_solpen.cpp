@@ -409,8 +409,8 @@ int main(int argc, const char* argv[]){
                 optimizer.addVertex(vt_aru_obj_pts);
                 e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(vt_aru_obj_pts));
 
-                e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertices().find(n_frm + num_markers)->second));
                 e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertices().find(n_frm)->second));
+                e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertices().find(n_frm + num_markers)->second));
                 e->setParameterId(0,0);
                 optimizer.addEdge(e);
 

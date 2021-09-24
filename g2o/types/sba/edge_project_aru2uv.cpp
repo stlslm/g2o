@@ -22,14 +22,19 @@ bool EdgeProjectARU2UV::write(std::ostream& os) const {
 
 void EdgeProjectARU2UV::computeError() {
     const auto mk_obj_p3d = static_cast<const g2o::VertexPointXYZ*>(_vertices[0])->estimate();
-    const auto cam_T_pen = static_cast<const g2o::VertexSE3Expmap*>(_vertices[1])->estimate();
-    const auto pen_T_face = static_cast<const g2o::VertexSE3Expmap*>(_vertices[2])->estimate();
+    const auto pen_T_face = static_cast<const g2o::VertexSE3Expmap*>(_vertices[1])->estimate();
+    const auto cam_T_pen = static_cast<const g2o::VertexSE3Expmap*>(_vertices[2])->estimate();
 
     const CameraParameters* cam = static_cast<const CameraParameters*>(parameter(0));
 
      _error = measurement() - cam->cam_map(cam_T_pen.map(pen_T_face.map(mk_obj_p3d)));
-    // std::cout << "measurement: " << measurement().transpose() << std::endl;
-    // std::cout << "est: " << cam->cam_map(cam_T_pen.map(pen_T_face.map(mk_obj_p3d))).transpose() << std::endl;
+    std::cout << "measurement: " << measurement().transpose() << std::endl;
+    std::cout << "est: " << cam->cam_map(cam_T_pen.map(pen_T_face.map(mk_obj_p3d))).transpose() << std::endl;
+    std::cout << "err: " << _error.transpose() << std::endl;
+    std::cout << "p3d: " << mk_obj_p3d.transpose() << std::endl;
+    std::cout << "cam_T_pen (xyz-xyzw): \n" << cam_T_pen.toVector() << std::endl;
+    std::cout << "pen_T_face: \n" << pen_T_face.toVector() << std::endl;
+    int c = getchar();
 };
 
 

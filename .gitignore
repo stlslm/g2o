@@ -4,3 +4,6 @@
 \.vs
 \.vscode
 g2o/examples/ba_solpen/geom_txt_dat_testsmall
+g2o/examples/ba_solpen/sol_iter_*.g2o
+g2o/examples/ba_solpen/geom_frames
+g2o/examples/ba_solpen/geom_txt_dat_v1
