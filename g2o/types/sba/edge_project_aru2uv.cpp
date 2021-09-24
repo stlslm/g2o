@@ -32,8 +32,9 @@ void EdgeProjectARU2UV::computeError() {
     std::cout << "est: " << cam->cam_map(cam_T_pen.map(pen_T_face.map(mk_obj_p3d))).transpose() << std::endl;
     std::cout << "err: " << _error.transpose() << std::endl;
     std::cout << "p3d: " << mk_obj_p3d.transpose() << std::endl;
-    std::cout << "cam_T_pen (xyz-xyzw): \n" << cam_T_pen.toVector() << std::endl;
-    std::cout << "pen_T_face: \n" << pen_T_face.toVector() << std::endl;
+    std::cout << "cam_T_pen (xyz-xyzw): " << cam_T_pen.toVector().transpose() << std::endl;
+    std::cout << "pen_T_face: " << pen_T_face.toVector().transpose() << std::endl;
+    std::cout << std::endl;
     int c = getchar();
 };
 
